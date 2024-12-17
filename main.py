@@ -7,7 +7,42 @@ import asyncio
 # API для получения данных
 API_URL = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd"
 
-# добавить базу данных и сохранение настроек пользователя!!
+# Функция для инициализации базы данных
+def init_db():
+    #Соединяет с базой данных, если базы не существует, создается new
+    conn = sqlite3.connect("users.db")
+
+    cursor = conn.cursor() #Объект курсора для создания sql запросов
+    
+    # Выполняет sql запрос, создаёт таблицу, вставляет данные, обновляет записи и выполняет SELECT-запросы.
+    cursor.execute(''' 
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            preferred_crypto TEXT DEFAULT 'bitcoin'
+        )
+    ''')
+    conn.commit() # cохраняет изменеия в базе 
+    conn.close()
+
+# Сохранение настроек пользователя
+def save_user_settings(user_id, crypto):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT OR REPLACE INTO users (user_id, preferred_crypto)
+        VALUES (?, ?)
+    ''', (user_id, crypto))
+    conn.commit()
+    conn.close()
+
+# Получение настроек пользователя
+def get_user_settings(user_id):
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute('SELECT preferred_crypto FROM users WHERE user_id = ?', (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else 'bitcoin'
 
 # Функция для получения данных о криптовалютах
 def get_crypto_data(crypto):
